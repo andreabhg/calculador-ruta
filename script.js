@@ -2,7 +2,7 @@ let map;
 let routeLayer;
 
 // TU CLAVE DE GEMINI (Esta sí es gratis y no pide tarjeta)
-const GEMINI_API_KEY = "AQ.Ab8RN6K2GTP8CUO1RbhtZphtVACmCQ3kJKLMdcWhs2P1PKGyMQ"; 
+const GEMINI_API_KEY = "AQ.Ab8RN6KdDFz7EtmCiUpRd089y-6gM_A2jNxwD0xlUNSmhKjNRw"; 
 
 // Inicializar el mapa al cargar la página
 document.addEventListener("DOMContentLoaded", () => {
