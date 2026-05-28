@@ -85,3 +85,10 @@ button:hover {
     background-color: #e5e3df;
     box-shadow: inset 0 2px 4px rgba(0,0,0,0.1);
 }
+.form-row {
+    display: flex;
+    gap: 15px;
+}
+.form-row .form-group {
+    flex: 1;
+}
