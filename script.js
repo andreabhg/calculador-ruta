@@ -1,76 +1,101 @@
 let map;
-let directionsService;
-let directionsRenderer;
+let routeLayer;
 
-// CONFIGURACIÓN: REEMPLAZA CON TU API KEY DE GOOGLE AI STUDIO
+// TU CLAVE DE GEMINI (Esta sí es gratis y no pide tarjeta)
 const GEMINI_API_KEY = "AQ.Ab8RN6K2GTP8CUO1RbhtZphtVACmCQ3kJKLMdcWhs2P1PKGyMQ"; 
 
-function initMap() {
-    directionsService = new google.maps.DirectionsService();
-    directionsRenderer = new google.maps.DirectionsRenderer();
+// Inicializar el mapa al cargar la página
+document.addEventListener("DOMContentLoaded", () => {
+    // Centrado inicial
+    map = L.map('map').setView([-33.4489, -70.6693], 10);
+    
+    // Cargar visual de OpenStreetMap
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '© OpenStreetMap contributors'
+    }).addTo(map);
 
-    const defaultCenter = { lat: -33.4489, lng: -70.6693 }; // Santiago
-
-    map = new google.maps.Map(document.getElementById("map"), {
-        zoom: 12,
-        center: defaultCenter,
-        mapTypeControl: false,
-        streetViewControl: false
-    });
-
-    directionsRenderer.setMap(map);
-
-    const form = document.getElementById("route-form");
-    form.addEventListener("submit", function (event) {
+    document.getElementById("route-form").addEventListener("submit", async function (event) {
         event.preventDefault();
-        calcularRuta();
+        procesarRuta();
     });
-}
+});
 
-function calcularRuta() {
-    const originAddress = document.getElementById("origin").value;
-    const destinationAddress = document.getElementById("destination").value;
+async function procesarRuta() {
+    const origin = document.getElementById("origin").value;
+    const destination = document.getElementById("destination").value;
 
-    const request = {
-        origin: originAddress,
-        destination: destinationAddress,
-        travelMode: google.maps.TravelMode.DRIVING
-    };
+    try {
+        // 1. Convertir direcciones a coordenadas (Geocoding gratuito)
+        const coordA = await obtenerCoordenadas(origin);
+        const coordB = await obtenerCoordenadas(destination);
 
-    directionsService.route(request, function (response, status) {
-        if (status === google.maps.DirectionsStatus.OK) {
-            directionsRenderer.setDirections(response);
-
-            const routeLeg = response.routes[0].legs[0];
-            const distanceText = routeLeg.distance.text; // Ej: "120 km"
-            
-            // Mostrar la sección de resultados y la distancia del mapa
-            document.getElementById("distance-output").textContent = distanceText;
-            document.getElementById("result").style.style.display = "block";
-
-            // Capturar el resto de los datos para la IA
-            const car = document.getElementById("car-model").value;
-            const engine = document.getElementById("engine-size").value;
-            const passengers = document.getElementById("passengers").value;
-            const price = document.getElementById("fuel-price").value;
-
-            // Invocar a Gemini enviándole los parámetros limpios
-            consultarGemini(car, engine, passengers, price, distanceText);
-
-        } else {
-            alert("No se pudo trazar la ruta debido a: " + status);
+        if (!coordA || !coordB) {
+            alert("No se encontró una de las ubicaciones. Intenta ser más específico (Ej: agregando ', Chile').");
+            return;
         }
-    });
+
+        // 2. Calcular ruta y distancia (Routing gratuito OSRM)
+        const rutaData = await calcularRutaOSRM(coordA, coordB);
+        
+        // Convertir la distancia de metros a kilómetros
+        const kilometrosTotales = (rutaData.routes[0].distance / 1000).toFixed(1);
+        const distanceText = `${kilometrosTotales} km`;
+
+        // 3. Dibujar la ruta en el mapa
+        dibujarRutaEnMapa(rutaData.routes[0].geometry, coordA, coordB);
+
+        // 4. Mostrar resultados e invocar a Gemini
+        document.getElementById("distance-output").textContent = distanceText;
+        document.getElementById("result").style.display = "block";
+
+        const car = document.getElementById("car-model").value;
+        const engine = document.getElementById("engine-size").value;
+        const passengers = document.getElementById("passengers").value;
+        const price = document.getElementById("fuel-price").value;
+
+        consultarGemini(car, engine, passengers, price, distanceText);
+
+    } catch (error) {
+        console.error(error);
+        alert("Ocurrió un error al calcular la ruta.");
+    }
 }
 
+// Funciones de apoyo para las APIs gratuitas
+async function obtenerCoordenadas(direccion) {
+    const response = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(direccion)}`);
+    const data = await response.json();
+    return data.length > 0 ? [data[0].lon, data[0].lat] : null; // Retorna [longitud, latitud]
+}
+
+async function calcularRutaOSRM(coordA, coordB) {
+    // OSRM usa el formato: longitud,latitud
+    const url = `https://router.project-osrm.org/route/v1/driving/${coordA[0]},${coordA[1]};${coordB[0]},${coordB[1]}?overview=full&geometries=geojson`;
+    const response = await fetch(url);
+    return await response.json();
+}
+
+function dibujarRutaEnMapa(geoJsonCords, coordA, coordB) {
+    // Limpiar ruta anterior si existe
+    if (routeLayer) map.removeLayer(routeLayer);
+
+    // Dibujar nueva línea
+    routeLayer = L.geoJSON(geoJsonCords, {
+        style: { color: '#3498db', weight: 5 }
+    }).addTo(map);
+
+    // Ajustar la vista del mapa para que se vea toda la ruta
+    map.fitBounds(routeLayer.getBounds(), { padding: [50, 50] });
+}
+
+// Función de Gemini (Exactamente la misma que ya teníamos)
 async function consultarGemini(auto, motor, personas, precioLitro, distancia) {
     const loadingDiv = document.getElementById("gemini-loading");
     const outputDiv = document.getElementById("gemini-output");
 
     loadingDiv.style.display = "block";
-    outputDiv.innerHTML = ""; // Limpiar respuesta anterior
+    outputDiv.innerHTML = ""; 
 
-    // Construcción de instrucciones estrictas para que devuelva un formato limpio y procesable
     const prompt = `
         Actúa como un asistente experto en eficiencia vehicular en Chile. 
         Un usuario va a realizar un viaje de ${distancia}. 
@@ -79,7 +104,7 @@ async function consultarGemini(auto, motor, personas, precioLitro, distancia) {
         Precio de la bencina ingresado: $${precioLitro} CLP por litro.
 
         Calcula el consumo estimado considerando el rendimiento promedio de ese auto en carretera/mixto y el peso extra de los pasajeros. 
-        Devuelve la respuesta estructurada EXACTAMENTE usando las siguientes etiquetas HTML básicas (no uses markdown \`\`\`html ni bloques de código, solo el texto plano con las etiquetas):
+        Devuelve la respuesta estructurada EXACTAMENTE usando las siguientes etiquetas HTML básicas:
         
         <p><b>Consumo Estimado:</b> X Litros</p>
         <p><b>Costo Estimado del Tramo:</b> $Y CLP</p>
@@ -91,28 +116,13 @@ async function consultarGemini(auto, motor, personas, precioLitro, distancia) {
     try {
         const response = await fetch(url, {
             method: "POST",
-            headers: {
-                "Content-Type": "application/json"
-            },
-            body: JSON.stringify({
-                contents: [{
-                    parts: [{ text: prompt }]
-                }]
-            })
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
         });
 
-        if (!response.ok) throw new Error("Error en la respuesta de la API");
-
         const data = await response.json();
-        
-        // Extraer el texto generado por Gemini
-        const resultadoHTML = data.candidates[0].content.parts[0].text;
-        
-        // Inyectar directamente el HTML limpio entregado por la IA
-        outputDiv.innerHTML = resultadoHTML;
-
+        outputDiv.innerHTML = data.candidates[0].content.parts[0].text;
     } catch (error) {
-        console.error("Error al conectar con Gemini:", error);
         outputDiv.innerHTML = "<p style='color: red;'>No se pudo obtener la estimación de consumo en este momento.</p>";
     } finally {
         loadingDiv.style.display = "none";
