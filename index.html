@@ -8,7 +8,7 @@
 </head>
 <body>
     <div class="container">
-        <h2>Simulador de Ruta</h2>
+        <h2>Simulador de Ruta y Consumo Inteligente</h2>
         <form id="route-form">
             <div class="form-group">
                 <label for="origin">Punto A (Origen):</label>
@@ -16,19 +16,47 @@
             </div>
             <div class="form-group">
                 <label for="destination">Punto B (Destino):</label>
-                <input type="text" id="destination" placeholder="Ej: Las Cruces, Región de Valparaíso" required>
+                <input type="text" id="destination" placeholder="Ej: Las Cruces" required>
             </div>
-            <button type="submit">Calcular Kilómetros</button>
+
+            <div class="form-row">
+                <div class="form-group ½">
+                    <label for="car-model">Auto (Marca y Modelo):</label>
+                    <input type="text" id="car-model" placeholder="Ej: Suzuki Swift, Toyota RAV4" required>
+                </div>
+                <div class="form-group ½">
+                    <label for="engine-size">Motor (Litros):</label>
+                    <input type="text" id="engine-size" placeholder="Ej: 1.2, 2.0" required>
+                </div>
+            </div>
+
+            <div class="form-row">
+                <div class="form-group ½">
+                    <label for="passengers">N° de Pasajeros:</label>
+                    <input type="number" id="passengers" min="1" value="1" required>
+                </div>
+                <div class="form-group ½">
+                    <label for="fuel-price">Precio Bencina (CLP por Litro):</label>
+                    <input type="number" id="fuel-price" placeholder="Ej: 1350" required>
+                </div>
+            </div>
+
+            <button type="submit">Calcular Ruta y Consumo</button>
         </form>
 
         <div id="result" class="result-box" style="display: none;">
-            <p><strong>Distancia total de viaje:</strong> <span id="distance-output">0 km</span></p>
+            <h3>Resumen del Viaje</h3>
+            <p><strong>Distancia en mapa:</strong> <span id="distance-output">0 km</span></p>
+            <div id="gemini-loading" style="display: none; color: #7f8c8d; font-style: italic;">
+                Consultando a Gemini para estimar el consumo...
+            </div>
+            <div id="gemini-output"></div>
         </div>
 
         <div id="map"></div>
     </div>
 
-    <script src="https://maps.googleapis.com/maps/api/js?key=TU_API_KEY_AQUI&callback=initMap&v=weekly" defer></script>
+    <script src="https://maps.googleapis.com/maps/api/js?key=TU_MAPS_API_KEY&callback=initMap&v=weekly" defer></script>
     <script src="script.js"></script>
 </body>
 </html>
