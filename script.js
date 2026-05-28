@@ -3,7 +3,7 @@ let directionsService;
 let directionsRenderer;
 
 // CONFIGURACIÓN: REEMPLAZA CON TU API KEY DE GOOGLE AI STUDIO
-const GEMINI_API_KEY = "TU_GEMINI_API_KEY_AQUI"; 
+const GEMINI_API_KEY = "AQ.Ab8RN6K2GTP8CUO1RbhtZphtVACmCQ3kJKLMdcWhs2P1PKGyMQ"; 
 
 function initMap() {
     directionsService = new google.maps.DirectionsService();
