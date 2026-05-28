@@ -3,30 +3,33 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Calculador de Ruta - Consumo Vehicular</title>
+    <title>Calculador de Ruta - Open Source</title>
     <link rel="stylesheet" href="style.css">
+    
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 </head>
 <body>
     <div class="container">
-        <h2>Simulador de Ruta y Consumo Inteligente</h2>
+        <h2>Simulador de Ruta Inteligente</h2>
         <form id="route-form">
             <div class="form-group">
                 <label for="origin">Punto A (Origen):</label>
-                <input type="text" id="origin" placeholder="Ej: Providencia, Santiago" required>
+                <input type="text" id="origin" placeholder="Ej: Providencia, Santiago, Chile" required>
             </div>
             <div class="form-group">
                 <label for="destination">Punto B (Destino):</label>
-                <input type="text" id="destination" placeholder="Ej: Las Cruces" required>
+                <input type="text" id="destination" placeholder="Ej: El Tambo, San Vicente, Chile" required>
             </div>
 
             <div class="form-row">
                 <div class="form-group ½">
                     <label for="car-model">Auto (Marca y Modelo):</label>
-                    <input type="text" id="car-model" placeholder="Ej: Suzuki Swift, Toyota RAV4" required>
+                    <input type="text" id="car-model" placeholder="Ej: Suzuki Swift" required>
                 </div>
                 <div class="form-group ½">
                     <label for="engine-size">Motor (Litros):</label>
-                    <input type="text" id="engine-size" placeholder="Ej: 1.2, 2.0" required>
+                    <input type="text" id="engine-size" placeholder="Ej: 1.2" required>
                 </div>
             </div>
 
@@ -36,7 +39,7 @@
                     <input type="number" id="passengers" min="1" value="1" required>
                 </div>
                 <div class="form-group ½">
-                    <label for="fuel-price">Precio Bencina (CLP por Litro):</label>
+                    <label for="fuel-price">Precio Bencina (CLP):</label>
                     <input type="number" id="fuel-price" placeholder="Ej: 1350" required>
                 </div>
             </div>
@@ -56,7 +59,6 @@
         <div id="map"></div>
     </div>
 
-    <script src="https://maps.googleapis.com/maps/api/js?key=TU_MAPS_API_KEY&callback=initMap&v=weekly" defer></script>
     <script src="script.js"></script>
 </body>
 </html>
